@@ -12,64 +12,39 @@ fn main() {
 fn app(cx: Scope) -> Element {
     let css = include_str!(".styles.css");
     let v: Vec<u32> = (0..100).collect();
+    let eval_provider = dioxus_html::prelude::use_eval(cx);
+    println!("rendering app");
 
-    let script_var = r###"
-    var g = function () {
-        
-
-        console.log("registered event handlers");
-        var input = document.getElementById("compose-input");
-
-        document.addEventListener("scroll", (event) => {
-            if (window.scrollY === 0) {
-                console.log("scrolled to top");
-                input.value="top";
-                input.onchange();
-            }
-            if (window.innerHeight + window.pageYOffset >= document.body.offsetHeight) {
-                console.log("scrolled to bottom");
-                input.value="bottom";
-                input.onchange();
-            }
-        });
-
-        // todo: why do none of these work? 
-        var compose = document.getElementById("compose");
-        var compose_list = document.getElementById("compose-list");
-        var main = document.getElementById("main");
-        
-        compose.addEventListener('scroll', function(evt) {
-            console.log("scrolled div");
-            if (evt.target.scrollTop === 0) {
-                console.log("scrolled to top");
-            }
-            if (evt.target.scrollTop === evt.target.scrollHeight) {
-                console.log("scrolled to bottom");
-            }
-        }, false);
-
-        compose_list.addEventListener('scroll', function(evt) {
-            console.log("scrolled list");
-            if (evt.target.scrollTop === 0) {
-                console.log("scrolled to top");
-            }
-            if (evt.target.scrollTop === evt.target.scrollHeight) {
-                console.log("scrolled to bottom");
-            }
-        }, false);
-
-        main.addEventListener('scroll', function(evt) {
-            console.log("scrolled main");
-            if (evt.target.scrollTop === 0) {
-                console.log("scrolled to top");
-            }
-            if (evt.target.scrollTop === evt.target.scrollHeight) {
-                console.log("scrolled to bottom");
-            }
-        }, false);
-    };
-    g();
-    "###;
+    use_future(cx, (), |()| {
+        to_owned![eval_provider];
+        async move {
+            let eval = match eval_provider(
+                r#"
+                let el = document.getElementById("main");
+                if el === null {
+                    dioxus.send("could not find main");
+                } else {
+                    dioxus.send("found main!");
+                }
+                
+                let msg = await dioxus.recv();
+                console.log(msg);
+            "#,
+            ) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("use eval failed: {:?}", e);
+                    return;
+                }
+            };
+            match eval.recv().await {
+                Ok(msg) => {
+                    println!("got this from js: {msg}");
+                }
+                Err(e) => println!("eval failed: {e:?}"),
+            };
+        }
+    });
 
     render! {
         style {
@@ -77,8 +52,9 @@ fn app(cx: Scope) -> Element {
         }
         main {
             id: "main",
-            onscroll: move |evt| {
-                println!("scrolling main");
+            onscroll: move |_evt| {
+                // doesn't fire
+                println!("main scrolled");
             },
             div {
                 class: "sidebar",
@@ -86,29 +62,19 @@ fn app(cx: Scope) -> Element {
             div {
                 id: "compose",
                 class: "compose",
-                onscroll: move |evt| {
-                    println!("scrolling compose");
-                },
-                input {
-                    id: "compose-input",
-                    class: "hidden-input",
-                    placeholder: "test value",
-                    onchange: move |evt| {
-                        let value = &evt.value;
-                        println!("{value}");
-                    }
+                onscroll: move |_evt| {
+                    // doesn't fire
+                    println!("div scrolled");
                 },
                 ul {
                     id: "compose-list",
-                    onscroll: move |evt| {
-                        println!("scrolling list");
+                    onscroll: move |_evt| {
+                        // doesn't fire
+                        println!("ul scrolled");
                     },
                     v.iter().map(|x| rsx!(li{"{x}"}))
                 }
             },
-            script {
-                "{script_var}"
-            }
         }
     }
 }

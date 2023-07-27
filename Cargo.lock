@@ -523,7 +523,7 @@ dependencies = [
 [[package]]
 name = "dioxus"
 version = "0.3.2"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "dioxus-core",
  "dioxus-core-macro",
@@ -536,7 +536,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core"
 version = "0.3.3"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "bumpalo",
  "futures-channel",
@@ -552,7 +552,7 @@ dependencies = [
 [[package]]
 name = "dioxus-core-macro"
 version = "0.3.0"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "dioxus-rsx",
  "proc-macro2",
@@ -563,7 +563,7 @@ dependencies = [
 [[package]]
 name = "dioxus-desktop"
 version = "0.3.0"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "async-trait",
  "core-foundation",
@@ -592,7 +592,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hooks"
 version = "0.3.1"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "debug-cell",
  "dioxus-core",
@@ -604,7 +604,7 @@ dependencies = [
 [[package]]
 name = "dioxus-hot-reload"
 version = "0.1.1"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "dioxus-core",
  "dioxus-html",
@@ -617,7 +617,7 @@ dependencies = [
 [[package]]
 name = "dioxus-html"
 version = "0.3.1"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "async-channel",
  "async-trait",
@@ -635,12 +635,12 @@ dependencies = [
 [[package]]
 name = "dioxus-interpreter-js"
 version = "0.3.3"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 
 [[package]]
 name = "dioxus-rsx"
 version = "0.0.3"
-source = "git+https://github.com/DioxusLabs/dioxus.git#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
+source = "git+https://github.com/DioxusLabs/dioxus.git?rev=cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3#cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3"
 dependencies = [
  "dioxus-core",
  "proc-macro2",

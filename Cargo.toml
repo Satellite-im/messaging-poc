@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 # if this fails to build, add the ayatana feature  
-dioxus = { git = "https://github.com/DioxusLabs/dioxus.git" }
-dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git" }
-dioxus-html = { git = "https://github.com/DioxusLabs/dioxus.git" }
+dioxus = { git = "https://github.com/DioxusLabs/dioxus.git", rev="cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3" }
+dioxus-desktop = { git = "https://github.com/DioxusLabs/dioxus.git", rev="cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3" }
+dioxus-html = { git = "https://github.com/DioxusLabs/dioxus.git", rev="cfd62e274e9f4c52d8e0bae7cd138aef7c0e54f3" }
 tokio = { version = "1", features = ["full"] }
 
 
