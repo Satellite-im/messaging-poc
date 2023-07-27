@@ -15,20 +15,24 @@ fn app(cx: Scope) -> Element {
     let eval_provider = dioxus_html::prelude::use_eval(cx);
     println!("rendering app");
 
-    use_future(cx, (), |()| {
+    use_future(cx, (), |_| {
         to_owned![eval_provider];
         async move {
             let eval = match eval_provider(
                 r#"
-                let el = document.getElementById("main");
-                if el === null {
-                    dioxus.send("could not find main");
-                } else {
-                    dioxus.send("found main!");
+                function handle_scroll(event) {
+                    if (window.scrollY === 0) {
+                        console.log("scrolled to top");
+                        dioxus.send("top");
+                    }
+                    if (window.innerHeight + window.pageYOffset >= document.body.offsetHeight) {
+                        console.log("scrolled to bottom");
+                        dioxus.send("bottom");
+                    }
                 }
-                
-                let msg = await dioxus.recv();
-                console.log(msg);
+                if (document.onscroll === null) {
+                    document.addEventListener("scroll", handle_scroll);
+                }
             "#,
             ) {
                 Ok(r) => r,
@@ -37,12 +41,17 @@ fn app(cx: Scope) -> Element {
                     return;
                 }
             };
-            match eval.recv().await {
-                Ok(msg) => {
-                    println!("got this from js: {msg}");
-                }
-                Err(e) => println!("eval failed: {e:?}"),
-            };
+            loop {
+                match eval.recv().await {
+                    Ok(msg) => {
+                        println!("got this from js: {msg}");
+                    }
+                    Err(e) => {
+                        println!("eval failed: {e:?}");
+                        break;
+                    }
+                };
+            }
         }
     });
 
