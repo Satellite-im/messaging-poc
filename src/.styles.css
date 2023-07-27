@@ -1,0 +1,1 @@
+main{display:flex;flex-direction:row}.sidebar{flex:1;background-color:red}.compose{flex:5;background-color:blue;overflow-y:auto;color:yellow}.hidden-input{display:none}
