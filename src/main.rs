@@ -19,21 +19,41 @@ fn app(cx: Scope) -> Element {
         to_owned![eval_provider];
         async move {
             let eval = match eval_provider(
-                r#"
-                function handle_scroll(event) {
-                    if (window.scrollY === 0) {
-                        console.log("scrolled to top");
-                        dioxus.send("top");
+                r###"
+
+                let options = {
+                    root: null, //document.querySelector("#compose-list"),
+                    rootMargin: "0px",
+                    threshold: 0.75,
+                };
+                let observer = new IntersectionObserver( (entries, observer) => {
+                    // console.log(entries);
+                    if (entries[0].isIntersecting) {
+                        dioxus.send("intersection-top");
+                   } else {
+                       dioxus.send("removed intersection-top");
+                   }
+                }, options);
+
+                observer.observe(document.querySelector("li:first-child"));
+
+                let options2 = {
+                    root: null, // document.querySelector("#compose-list"),
+                    rootMargin: "0px",
+                    threshold: 0.75,
+                };
+                let observer2 = new IntersectionObserver( (entries, observer) => {
+                    // console.log(entries);
+                    if (entries[0].isIntersecting) {
+                         dioxus.send("intersection-bottom");
+                    } else {
+                        dioxus.send("removed intersection-bottom");
                     }
-                    if (window.innerHeight + window.pageYOffset >= document.body.offsetHeight) {
-                        console.log("scrolled to bottom");
-                        dioxus.send("bottom");
-                    }
-                }
-                if (document.onscroll === null) {
-                    document.addEventListener("scroll", handle_scroll);
-                }
-            "#,
+                   
+                }, options);
+
+                observer2.observe(document.querySelector("li:last-child"));
+            "###,
             ) {
                 Ok(r) => r,
                 Err(e) => {
