@@ -27,7 +27,7 @@ fn app(cx: Scope) -> Element {
                     threshold: 0.75,
                 };
                 let observer = new IntersectionObserver( (entries, observer) => {
-                    // console.log(entries);
+                     console.log(entries);
                     if (entries[0].isIntersecting) {
                         dioxus.send("intersection-top");
                    } else {
@@ -53,6 +53,11 @@ fn app(cx: Scope) -> Element {
                 }, options);
 
                 observer2.observe(document.querySelector("li:last-child"));
+
+                // const elem = document.getElementById("compose");
+                // const rect = elem.getBoundingClientRect();
+                // dioxus.send("rect height: " + rect["height"]);
+                // dioxus.send("rect width: " + rect["width"]);
             "###,
             ) {
                 Ok(r) => r,
