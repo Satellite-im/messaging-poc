@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 enum JsMsg {
     // ex json: {"Add":1}
-    Add(i32),
-    Remove(i32),
+    Add(u32),
+    Remove(u32),
     // ex json: {"Top":null}
     Top,
     Bottom,
@@ -21,7 +21,7 @@ enum JsMsg {
 // https://github.com/DioxusLabs/dioxus/pull/1080
 
 const OBSERVER_SCRIPT: &str = r###"
-let observer3 = new IntersectionObserver( (entries, observer) => {
+var observer3 = new IntersectionObserver( (entries, observer) => {
     entries.forEach((entry) => {
         if (entry.isIntersecting) {
             dioxus.send("{\"Add\":" + entry.target.id + "}");
@@ -29,7 +29,7 @@ let observer3 = new IntersectionObserver( (entries, observer) => {
                 dioxus.send("{\"Bottom\":null}");
             } else if (!entry.target.previousElementSibling) {
                 dioxus.send("{\"Top\":null}");
-                //observer.disconnect();
+                observer.disconnect();
             }
         } else {
             dioxus.send("{\"Remove\":" + entry.target.id + "}");
@@ -51,24 +51,19 @@ fn main() {
     dioxus_desktop::launch(app);
 }
 
-fn app(cx: Scope) -> Element {
+#[inline_props]
+fn render_msg_list(
+    cx: Scope,
+    msg_list: UseRef<SortedList<u32>>,
+    to_render: Vec<u32>,
+    to_take: UseState<usize>,
+    conversation_len: usize,
+) -> Element {
+    println!("rendering list");
+
     let css = include_str!(".styles.css");
-    let v: Vec<u32> = (0..100).collect();
     let eval_provider = dioxus_html::prelude::use_eval(cx);
-
-    let to_take = use_state(cx, || 20);
     let scroll_to: &UseRef<Option<u32>> = use_ref(cx, || None);
-    let effect_id = use_state(cx, || 0);
-
-    let to_render: Vec<_> = v
-        .iter()
-        .rev()
-        .take(*to_take.current())
-        .rev()
-        .cloned()
-        .collect();
-    println!("rendering app. to_take is {}", to_take.current());
-    let msg_list = use_ref(cx, SortedList::new);
 
     let scroll_script = match scroll_to.read().as_ref() {
         Some(id) => {
@@ -82,12 +77,14 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
         None => "window.scrollTo(0, document.body.scrollHeight);".into(),
     };
 
-    if scroll_to.read().is_some() {
-        scroll_to.write_silent().take();
-    }
-
-    let ch = use_coroutine(cx, move |mut rx: UnboundedReceiver<()>| {
-        to_owned![eval_provider, to_take, msg_list, scroll_to, v, effect_id];
+    let ch = use_coroutine(cx, |mut rx: UnboundedReceiver<()>| {
+        to_owned![
+            eval_provider,
+            to_take,
+            msg_list,
+            scroll_to,
+            conversation_len
+        ];
         async move {
             println!("starting use_future");
             while rx.next().await.is_some() {
@@ -126,13 +123,10 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                         JsMsg::Top => {
                                             println!("top reached");
                                             let y = *to_take.current();
-                                            if y < v.len() {
-                                                let x = std::cmp::min(y + 20, v.len());
-                                                *scroll_to.write() =
-                                                    msg_list.read().get_min().map(|x| x as _);
+                                            if y < conversation_len {
+                                                let x = std::cmp::min(y + 20, conversation_len);
+                                                *scroll_to.write() = msg_list.read().get_min();
                                                 to_take.set(x);
-                                                effect_id.with_mut(|x| *x = (*x + 1) % 3);
-                                                //let _ = eval.join().await;
                                                 break 'HANDLE_EVAL;
                                             }
                                         }
@@ -153,14 +147,6 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     };
                 }
             }
-        }
-    });
-
-    use_effect(cx, (&*effect_id.get()), move |_| {
-        to_owned![ch];
-        async move {
-            println!("use_effect");
-            ch.send(());
         }
     });
 
@@ -186,10 +172,25 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 },
                 ul {
                     onmounted: move |_| {
-                        // todo: handle scrolling here
+                        // handle scrolling here
                         // only good for calling something the first time the element renders
                         println!("list is mounted");
-                        ch.send(());
+                        to_owned![eval_provider, scroll_script, ch];
+                        async move {
+                            match eval_provider(&scroll_script) {
+                                Ok(_eval) => {
+                                    // if let Err(e) = eval.join().await {
+                                    //     eprintln!("failed to join eval: {:?}", e);
+                                    // } else {
+                                    //     ch.send(());
+                                    // }
+                                    ch.send(());
+                                }
+                                Err(e) => {
+                                    eprintln!("eval failed: {:?}", e);
+                                }
+                            }
+                        }
                     },
                     id: "compose-list",
                     onscroll: move |_evt| {
@@ -202,7 +203,29 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }))
                 }
             },
-            script { scroll_script },
+        }
+    }
+}
+
+fn app(cx: Scope) -> Element {
+    let v: Vec<u32> = (0..100).collect();
+    let to_take = use_state(cx, || 20);
+    let _to_render: Vec<_> = v
+        .iter()
+        .rev()
+        .take(*to_take.current())
+        .rev()
+        .cloned()
+        .collect();
+    println!("rendering app. to_take is {}", to_take.current());
+    let msg_list = use_ref(cx, SortedList::new);
+
+    render! {
+        render_msg_list{
+            msg_list: msg_list.clone(),
+            to_render: _to_render,
+            to_take: to_take.clone(),
+            conversation_len: v.len(),
         }
     }
 }
