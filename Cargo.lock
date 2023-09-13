@@ -1215,6 +1215,8 @@ dependencies = [
  "dioxus-html",
  "glob",
  "rsass",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

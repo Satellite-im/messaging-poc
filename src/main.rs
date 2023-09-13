@@ -1,8 +1,20 @@
 //use crate::{compose::Compose, sidebar::Sidebar};
 
-use std::{cmp::Ordering, collections::VecDeque};
+use std::collections::VecDeque;
 
 use dioxus::prelude::*;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+enum JsMsg {
+    // ex json: {"Add":1}
+    Add(i32),
+    Remove(i32),
+    // ex json: {"Top":null}
+    Top,
+    Bottom,
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
 // https://github.com/DioxusLabs/dioxus/pull/1080
@@ -29,11 +41,8 @@ fn app(cx: Scope) -> Element {
                     threshold: 0.75,
                 };
                 let observer = new IntersectionObserver( (entries, observer) => {
-                     console.log(entries);
                     if (entries[0].isIntersecting) {
-                        dioxus.send("intersection-top");
-                   } else {
-                       dioxus.send("removed intersection-top");
+                        dioxus.send("{\"Top\":null}");
                    }
                 }, options);
 
@@ -45,13 +54,9 @@ fn app(cx: Scope) -> Element {
                     threshold: 0.75,
                 };
                 let observer2 = new IntersectionObserver( (entries, observer) => {
-                    // console.log(entries);
                     if (entries[0].isIntersecting) {
-                         dioxus.send("intersection-bottom");
-                    } else {
-                        dioxus.send("removed intersection-bottom");
+                         dioxus.send("{\"Bottom\":null}");
                     }
-                   
                 }, options);
 
                 observer2.observe(document.querySelector("li:last-child"));
@@ -59,9 +64,9 @@ fn app(cx: Scope) -> Element {
                 let observer3 = new IntersectionObserver( (entries, observer) => {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
-                            dioxus.send("new intersection: " + entry.target.id);
+                            dioxus.send("{\"Add\":" + entry.target.id + "}");
                         } else {
-                            dioxus.send("removed intersection: " + entry.target.id);
+                            dioxus.send("{\"Remove\":" + entry.target.id + "}");
                         }
                     });
                 }, {
@@ -88,10 +93,43 @@ fn app(cx: Scope) -> Element {
                     return;
                 }
             };
+
+            let mut msg_list = SortedList::new();
             loop {
                 match eval.recv().await {
                     Ok(msg) => {
                         println!("got this from js: {msg}");
+                        if let Some(s) = msg.as_str() {
+                            match serde_json::from_str::<JsMsg>(s) {
+                                Ok(msg) => match msg {
+                                    JsMsg::Add(x) => {
+                                        msg_list.insert(x);
+                                        println!(
+                                            "new max: {:?}; new min: {:?}",
+                                            msg_list.get_max(),
+                                            msg_list.get_min()
+                                        );
+                                    }
+                                    JsMsg::Remove(x) => {
+                                        msg_list.remove(x);
+                                        println!(
+                                            "new max: {:?}; new min: {:?}",
+                                            msg_list.get_max(),
+                                            msg_list.get_min()
+                                        );
+                                    }
+                                    JsMsg::Top => {
+                                        println!("top reached");
+                                    }
+                                    JsMsg::Bottom => {
+                                        println!("bottom reached");
+                                    }
+                                },
+                                Err(e) => {
+                                    eprintln!("failed to deserialize message: {}: {}", s, e);
+                                }
+                            }
+                        }
                     }
                     Err(e) => {
                         println!("eval failed: {e:?}");
@@ -156,24 +194,25 @@ where
     }
 
     fn insert(&mut self, val: T) {
-        match self.items.front() {
-            None => self.items.push_back(val),
-            Some(x) => match x.cmp(&val) {
-                Ordering::Greater | Ordering::Equal => self.items.push_front(val),
-                Ordering::Less => self.items.push_back(val),
-            },
+        if self.items.is_empty() {
+            self.items.push_back(val);
+        } else if self.items.front().map(|x| x >= &val).unwrap_or(false) {
+            self.items.push_front(val);
+        } else if self.items.back().map(|x| x <= &val).unwrap_or(false) {
+            self.items.push_back(val);
+        } else {
+            println!("invalid insert: {:?}", val);
         }
     }
 
     fn remove(&mut self, val: T) {
-        let item_removed = match self.items.front() {
-            None => return,
-            Some(x) => match x.cmp(&val) {
-                Ordering::Equal => self.items.pop_front(),
-                _ => self.items.pop_back(),
-            },
-        };
-        assert_eq!(item_removed, Some(val));
+        if self.items.front().map(|x| x == &val).unwrap_or(false) {
+            self.items.pop_front();
+        } else if self.items.back().map(|x| x == &val).unwrap_or(false) {
+            self.items.pop_back();
+        } else {
+            println!("invalid remove: {:?}", val);
+        }
     }
 
     fn get_min(&self) -> Option<T> {
