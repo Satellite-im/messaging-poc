@@ -30,6 +30,7 @@ function observe_list() {
                     dioxus.send("{\"Bottom\":null}");
                 } else if (!entry.target.previousElementSibling) {
                     dioxus.send("{\"Top\":null}");
+                    // todo: only disconnect in response to command...
                     observer.disconnect();
                 }
             } else {
@@ -77,7 +78,7 @@ fn render_msg_list(
             println!("scrolling to id {id}");
             let s = r##"
 var message = document.getElementById("$MESSAGE_ID");
-message.scrollIntoView({ behavior: 'smooth', block: 'start' });
+message.scrollIntoView({ behavior: 'instant', block: 'start' });
 return "done";
 "##;
             s.replace("$MESSAGE_ID", &format!("{id}"))
@@ -135,6 +136,7 @@ return "done";
                                                 let x = std::cmp::min(y + 20, conversation_len);
                                                 *scroll_to.write() = msg_list.read().get_min();
                                                 to_take.set(x);
+                                                msg_list.write().clear();
                                                 break 'HANDLE_EVAL;
                                             }
                                         }
@@ -255,6 +257,10 @@ where
         Self {
             items: VecDeque::new(),
         }
+    }
+
+    fn clear(&mut self) {
+        self.items.clear();
     }
 
     fn insert(&mut self, val: T) {
