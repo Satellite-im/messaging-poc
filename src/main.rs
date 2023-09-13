@@ -22,13 +22,14 @@ enum JsMsg {
 
 const OBSERVER_SCRIPT: &str = r###"
 function observe_list() {
+    var send_top_event = $SEND_TOP_EVENT;
     var observer3 = new IntersectionObserver( (entries, observer) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
                 dioxus.send("{\"Add\":" + entry.target.id + "}");
                 if (!entry.target.nextElementSibling) {
                     dioxus.send("{\"Bottom\":null}");
-                } else if (!entry.target.previousElementSibling) {
+                } else if (!entry.target.previousElementSibling && send_top_event) {
                     dioxus.send("{\"Top\":null}");
                     observer.disconnect();
                 }
@@ -96,7 +97,12 @@ return "done";
             println!("starting use_coroutine");
             while rx.next().await.is_some() {
                 println!("use_coroutine loop");
-                let eval = match eval_provider(OBSERVER_SCRIPT) {
+                let script = if *to_take.current() == conversation_len {
+                    OBSERVER_SCRIPT.replace("$SEND_TOP_EVENT", "0")
+                } else {
+                    OBSERVER_SCRIPT.replace("$SEND_TOP_EVENT", "1")
+                };
+                let eval = match eval_provider(&script) {
                     Ok(r) => r,
                     Err(e) => {
                         eprintln!("use eval failed: {:?}", e);
@@ -129,14 +135,14 @@ return "done";
                                         }
                                         JsMsg::Top => {
                                             println!("top reached");
-                                            let y = *to_take.current();
-                                            if y < conversation_len {
-                                                let x = std::cmp::min(y + 20, conversation_len);
-                                                *scroll_to.write() = msg_list.read().get_min();
-                                                to_take.set(x);
-                                                msg_list.write().clear();
-                                                break 'HANDLE_EVAL;
-                                            }
+                                            let x = std::cmp::min(
+                                                *to_take.current() + 20,
+                                                conversation_len,
+                                            );
+                                            *scroll_to.write() = msg_list.read().get_min();
+                                            to_take.set(x);
+                                            msg_list.write().clear();
+                                            break 'HANDLE_EVAL;
                                         }
                                         JsMsg::Bottom => {
                                             println!("bottom reached");
