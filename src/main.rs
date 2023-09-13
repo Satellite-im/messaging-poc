@@ -21,30 +21,37 @@ enum JsMsg {
 // https://github.com/DioxusLabs/dioxus/pull/1080
 
 const OBSERVER_SCRIPT: &str = r###"
-var observer3 = new IntersectionObserver( (entries, observer) => {
-    entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-            dioxus.send("{\"Add\":" + entry.target.id + "}");
-            if (!entry.target.nextElementSibling) {
-                dioxus.send("{\"Bottom\":null}");
-            } else if (!entry.target.previousElementSibling) {
-                dioxus.send("{\"Top\":null}");
-                observer.disconnect();
+function observe_list() {
+    var observer3 = new IntersectionObserver( (entries, observer) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                dioxus.send("{\"Add\":" + entry.target.id + "}");
+                if (!entry.target.nextElementSibling) {
+                    dioxus.send("{\"Bottom\":null}");
+                } else if (!entry.target.previousElementSibling) {
+                    dioxus.send("{\"Top\":null}");
+                    observer.disconnect();
+                }
+            } else {
+                dioxus.send("{\"Remove\":" + entry.target.id + "}");
             }
-        } else {
-            dioxus.send("{\"Remove\":" + entry.target.id + "}");
-        }
+        });
+    }, {
+        root: null,
+        rootMargin: "0px",
+        threshold: 0.75,
     });
-}, {
-    root: null,
-    rootMargin: "0px",
-    threshold: 0.75,
-});
-const elements = document.querySelectorAll("#compose-list > li");
-elements.forEach( (element) => {
-    let id = "#" + element.id;
-    observer3.observe(element);
-});
+    const elements = document.querySelectorAll("#compose-list > li");
+    elements.forEach( (element) => {
+        let id = "#" + element.id;
+        observer3.observe(element);
+    });
+}
+
+
+    observe_list();
+
+
 "###;
 
 fn main() {
@@ -71,10 +78,11 @@ fn render_msg_list(
             let s = r##"
 var message = document.getElementById("$MESSAGE_ID");
 message.scrollIntoView({ behavior: 'smooth', block: 'start' });
+return "done";
 "##;
             s.replace("$MESSAGE_ID", &format!("{id}"))
         }
-        None => "window.scrollTo(0, document.body.scrollHeight);".into(),
+        None => r#"window.scrollTo(0, document.body.scrollHeight); return "done";"#.into(),
     };
 
     let ch = use_coroutine(cx, |mut rx: UnboundedReceiver<()>| {
@@ -86,9 +94,9 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
             conversation_len
         ];
         async move {
-            println!("starting use_future");
+            println!("starting use_coroutine");
             while rx.next().await.is_some() {
-                println!("use_future loop");
+                println!("use_coroutine loop");
                 let eval = match eval_provider(OBSERVER_SCRIPT) {
                     Ok(r) => r,
                     Err(e) => {
@@ -155,13 +163,12 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
         async move {
             println!("use_effect");
             match eval_provider(&scroll_script) {
-                Ok(_eval) => {
-                    // if let Err(e) = eval.join().await {
-                    //     eprintln!("failed to join eval: {:?}", e);
-                    // } else {
-                    //     ch.send(());
-                    // }
-                    ch.send(());
+                Ok(eval) => {
+                    if let Err(e) = eval.join().await {
+                        eprintln!("failed to join eval: {:?}", e);
+                    } else {
+                        ch.send(());
+                    }
                 }
                 Err(e) => {
                     eprintln!("eval failed: {:?}", e);
