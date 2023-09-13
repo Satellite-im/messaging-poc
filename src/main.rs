@@ -1,5 +1,7 @@
 //use crate::{compose::Compose, sidebar::Sidebar};
 
+use std::{cmp::Ordering, collections::VecDeque};
+
 use dioxus::prelude::*;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
@@ -133,5 +135,90 @@ fn app(cx: Scope) -> Element {
                 }
             },
         }
+    }
+}
+
+struct SortedList<T>
+where
+    T: Ord,
+{
+    items: VecDeque<T>,
+}
+
+impl<T> SortedList<T>
+where
+    T: Ord + Clone + std::fmt::Debug,
+{
+    fn new() -> Self {
+        Self {
+            items: VecDeque::new(),
+        }
+    }
+
+    fn insert(&mut self, val: T) {
+        match self.items.front() {
+            None => self.items.push_back(val),
+            Some(x) => match x.cmp(&val) {
+                Ordering::Greater | Ordering::Equal => self.items.push_front(val),
+                Ordering::Less => self.items.push_back(val),
+            },
+        }
+    }
+
+    fn remove(&mut self, val: T) {
+        let item_removed = match self.items.front() {
+            None => return,
+            Some(x) => match x.cmp(&val) {
+                Ordering::Equal => self.items.pop_front(),
+                _ => self.items.pop_back(),
+            },
+        };
+        assert_eq!(item_removed, Some(val));
+    }
+
+    fn get_min(&self) -> Option<T> {
+        self.items.front().cloned()
+    }
+
+    fn get_max(&self) -> Option<T> {
+        self.items.back().cloned()
+    }
+
+    fn get_idx(&self, idx: usize) -> Option<T> {
+        self.items.get(idx).cloned()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn sorted_list_test1() {
+        let mut l = SortedList::new();
+        l.insert(1);
+        l.insert(2);
+
+        assert_eq!(1, l.get_idx(0).unwrap());
+        assert_eq!(2, l.get_idx(1).unwrap());
+
+        l.insert(0);
+        assert_eq!(0, l.get_idx(0).unwrap());
+        assert_eq!(2, l.get_idx(2).unwrap());
+    }
+
+    #[test]
+    fn sorted_list_test2() {
+        let mut l = SortedList::new();
+        l.insert(1);
+        l.insert(2);
+        l.insert(3);
+        l.insert(4);
+
+        l.remove(1);
+        assert_eq!(2, l.get_idx(0).unwrap());
+
+        l.remove(4);
+        assert_eq!(3, l.get_idx(1).unwrap());
     }
 }
