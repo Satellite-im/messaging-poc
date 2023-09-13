@@ -30,7 +30,6 @@ function observe_list() {
                     dioxus.send("{\"Bottom\":null}");
                 } else if (!entry.target.previousElementSibling) {
                     dioxus.send("{\"Top\":null}");
-                    // todo: only disconnect in response to command...
                     observer.disconnect();
                 }
             } else {
@@ -50,8 +49,7 @@ function observe_list() {
 }
 
 
-    observe_list();
-
+observe_list();
 
 "###;
 
@@ -63,8 +61,8 @@ fn main() {
 fn render_msg_list(
     cx: Scope,
     msg_list: UseRef<SortedList<u32>>,
-    to_render: Vec<u32>,
     to_take: UseState<usize>,
+    to_render: Vec<u32>,
     conversation_len: usize,
 ) -> Element {
     println!("rendering list");
@@ -160,7 +158,7 @@ return "done";
         }
     });
 
-    use_effect(cx, (&scroll_script), move |scroll_script| {
+    use_effect(cx, &scroll_script, move |scroll_script| {
         to_owned![eval_provider, ch];
         async move {
             println!("use_effect");
