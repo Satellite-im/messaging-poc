@@ -15,7 +15,7 @@ fn app(cx: Scope) -> Element {
     let eval_provider = dioxus_html::prelude::use_eval(cx);
     println!("rendering app");
 
-    use_future(cx, (), |_| {
+    use_effect(cx, (), |_| {
         to_owned![eval_provider];
         async move {
             let eval = match eval_provider(
@@ -53,6 +53,26 @@ fn app(cx: Scope) -> Element {
                 }, options);
 
                 observer2.observe(document.querySelector("li:last-child"));
+
+                let observer3 = new IntersectionObserver( (entries, observer) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            dioxus.send("new intersection: " + entry.target.id);
+                        } else {
+                            dioxus.send("removed intersection: " + entry.target.id);
+                        }
+                    });
+                }, {
+                    root: null,
+                    rootMargin: "0px",
+                    threshold: 0.75,
+                });
+                const elements = document.querySelectorAll("#compose-list > li");
+                elements.forEach( (element) => {
+                    let id = "#" + element.id;
+                    // dioxus.send("observing " + id);
+                    observer3.observe(element);
+                });
 
                 // const elem = document.getElementById("compose");
                 // const rect = elem.getBoundingClientRect();
@@ -106,7 +126,10 @@ fn app(cx: Scope) -> Element {
                         // doesn't fire
                         println!("ul scrolled");
                     },
-                    v.iter().map(|x| rsx!(li{"{x}"}))
+                    v.iter().map(|x| rsx!(li {
+                        id: "{x}",
+                        "{x}"
+                    }))
                 }
             },
         }
