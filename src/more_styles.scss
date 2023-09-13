@@ -15,6 +15,10 @@ main {
     background-color: blue;
     overflow-y: auto;
     color: yellow;
+
+    li {
+        min-height: 50px;
+    }
 }
 .hidden-input {
     display: none;
