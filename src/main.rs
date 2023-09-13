@@ -150,6 +150,26 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 
+    use_effect(cx, (&scroll_script), move |scroll_script| {
+        to_owned![eval_provider, ch];
+        async move {
+            println!("use_effect");
+            match eval_provider(&scroll_script) {
+                Ok(_eval) => {
+                    // if let Err(e) = eval.join().await {
+                    //     eprintln!("failed to join eval: {:?}", e);
+                    // } else {
+                    //     ch.send(());
+                    // }
+                    ch.send(());
+                }
+                Err(e) => {
+                    eprintln!("eval failed: {:?}", e);
+                }
+            }
+        }
+    });
+
     render! {
         style {
             "{css}"
@@ -172,25 +192,8 @@ message.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 },
                 ul {
                     onmounted: move |_| {
-                        // handle scrolling here
                         // only good for calling something the first time the element renders
                         println!("list is mounted");
-                        to_owned![eval_provider, scroll_script, ch];
-                        async move {
-                            match eval_provider(&scroll_script) {
-                                Ok(_eval) => {
-                                    // if let Err(e) = eval.join().await {
-                                    //     eprintln!("failed to join eval: {:?}", e);
-                                    // } else {
-                                    //     ch.send(());
-                                    // }
-                                    ch.send(());
-                                }
-                                Err(e) => {
-                                    eprintln!("eval failed: {:?}", e);
-                                }
-                            }
-                        }
                     },
                     id: "compose-list",
                     onscroll: move |_evt| {
