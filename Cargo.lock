@@ -1231,21 +1231,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
-name = "hello-dioxus"
-version = "0.1.0"
-dependencies = [
- "dioxus",
- "dioxus-desktop",
- "dioxus-html",
- "futures",
- "glob",
- "rsass",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "hermit-abi"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1570,6 +1555,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "messaging-poc"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "dioxus-desktop",
+ "dioxus-html",
+ "futures",
+ "glob",
+ "rsass",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

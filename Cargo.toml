@@ -1,5 +1,5 @@
 [package]
-name = "hello-dioxus"
+name = "messaging-poc"
 version = "0.1.0"
 edition = "2021"
 
